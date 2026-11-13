@@ -1,0 +1,20 @@
+# Server Configuration
+PORT=3000
+
+# Database Connection (MongoDB Atlas or Local MongoDB)
+MONGO_URI=mongodb+srv://<username>:<password>@vclt.5qaykud.mongodb.net/vclt
+
+# JWT & Session Security
+JWT_SECRET=your_jwt_secret_key_here
+SESSION_SECRET=your_session_secret_key_here
+
+# Email Service (Nodemailer Gmail SMTP)
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
+
+# Agora WebRTC Credentials
+AGORA_APP_ID=your_agora_app_id
+
+# Admin Credentials
+ADMIN_EMAIL=admin@gmail.com
+ADMIN_PASSWORD=Admin@123
