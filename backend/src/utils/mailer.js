@@ -2,17 +2,23 @@ import nodemailer from 'nodemailer';
 
 export const sendOTPEmail = async (toEmail, otp, purpose = 'Verification') => {
   try {
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_PASS;
+    const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+    const pass = process.env.SMTP_PASSWORD || process.env.EMAIL_PASS;
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = Number(process.env.SMTP_PORT) || 587;
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465;
+    const from = process.env.MAIL_FROM || user;
 
     if (!user || !pass) {
-      console.warn('⚠️ EMAIL_USER or EMAIL_PASS not set. Logging OTP to console:');
+      console.warn('⚠️ SMTP/Email credentials not set. Logging OTP to console:');
       console.log(`🔑 [OTP for ${toEmail}] (${purpose}): ${otp}`);
       return { success: true, mocked: true };
     }
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host,
+      port,
+      secure,
       auth: {
         user,
         pass,
@@ -20,7 +26,7 @@ export const sendOTPEmail = async (toEmail, otp, purpose = 'Verification') => {
     });
 
     const mailOptions = {
-      from: `"VCLT Support" <${user}>`,
+      from: `"VCLT Support" <${from}>`,
       to: toEmail,
       subject: `VCLT ${purpose} OTP Code`,
       html: `
