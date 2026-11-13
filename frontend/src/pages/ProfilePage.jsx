@@ -223,7 +223,7 @@ export const ProfilePage = () => {
               >
                 {user?.profile ? (
                   <img
-                    src={`/uploads/${user.profile}`}
+                    src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/+$/, '') : ''}/uploads/${user.profile}`}
                     alt="Profile"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
