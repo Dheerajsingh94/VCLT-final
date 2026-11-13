@@ -24,12 +24,20 @@ export const useSpeechRecognition = ({ isListening, speechCode, onTranscript }) 
     recognition.interimResults = false;
     recognition.lang = speechCodeRef.current || 'en-US';
 
+    let restartTimer = null;
+
     recognition.onresult = (event) => {
-      const current = event.resultIndex;
-      const transcript = event.results[current][0].transcript;
-      if (transcript && transcript.trim()) {
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i] && event.results[i][0]) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+      const trimmed = finalTranscript.trim();
+      if (trimmed) {
+        console.log('[VCLT Speech Recognized]:', trimmed);
         if (onTranscriptRef.current) {
-          onTranscriptRef.current(transcript.trim());
+          onTranscriptRef.current(trimmed);
         }
       }
     };
@@ -42,19 +50,25 @@ export const useSpeechRecognition = ({ isListening, speechCode, onTranscript }) 
     };
 
     recognition.onend = () => {
-      // If mic is still supposed to be listening, automatically restart
+      // Restart cleanly with slight delay to prevent synchronous restart error
+      clearTimeout(restartTimer);
       if (isListeningRef.current && recognitionRef.current) {
-        try {
-          recognition.start();
-        } catch {
-          // Ignore if already active
-        }
+        restartTimer = setTimeout(() => {
+          if (isListeningRef.current && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch (err) {
+              // Ignore if already active
+            }
+          }
+        }, 300);
       }
     };
 
     recognitionRef.current = recognition;
 
     return () => {
+      clearTimeout(restartTimer);
       try {
         recognition.stop();
       } catch {

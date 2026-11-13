@@ -43,12 +43,15 @@ export const useAgora = ({
         // RTC event listeners
         rtc.on('user-published', async (user, mediaType) => {
           await rtc.subscribe(user, mediaType);
-          if (mediaType === 'video') {
-            setRemoteUsers((prev) => {
-              if (prev.find((u) => u.uid === user.uid)) return prev;
-              return [...prev, user];
-            });
-          }
+
+          setRemoteUsers((prev) => {
+            const exists = prev.find((u) => u.uid === user.uid);
+            if (exists) {
+              return prev.map((u) => (u.uid === user.uid ? user : u));
+            }
+            return [...prev, user];
+          });
+
           if (mediaType === 'audio') {
             user.audioTrack?.play();
           }
@@ -56,7 +59,10 @@ export const useAgora = ({
 
         rtc.on('user-unpublished', (user, mediaType) => {
           if (mediaType === 'video') {
-            setRemoteUsers((prev) => prev.filter((u) => u.uid !== user.uid));
+            // Keep remote user in the room, just re-render with video off placeholder
+            setRemoteUsers((prev) =>
+              prev.map((u) => (u.uid === user.uid ? user : u))
+            );
           }
         });
 
@@ -91,9 +97,15 @@ export const useAgora = ({
             rtmClientRef.current = rtm;
 
             await rtm.login({ uid: rtmUid });
-            await rtm.addOrUpdateChannelAttributes(roomId, {
-              name: displayName || 'Participant',
-            });
+
+            // Channel attributes (safely wrap so optional attributes don't block channel connection)
+            try {
+              await rtm.addOrUpdateChannelAttributes(roomId, [
+                { key: 'name', value: displayName || 'Participant' },
+              ]);
+            } catch (attrErr) {
+              console.warn('Channel attributes skipped:', attrErr.message);
+            }
 
             const channel = rtm.createChannel(roomId);
             rtmChannelRef.current = channel;
